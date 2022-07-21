@@ -14,3 +14,8 @@ pydantic==1.9.1
 Pygments==2.12.0
 typing_extensions==4.3.0
 yarl==1.7.2
+
+pip~=22.0.4
+aiogram~=3.0.0b4
+asyncpg~=0.26.0
+setuptools~=58.1.0
