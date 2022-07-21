@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import psycopg2
+import asyncpg
 
 from aiogram import Bot, Dispatcher
 from aiogram.dispatcher.fsm.storage.memory import MemoryStorage
@@ -9,14 +9,13 @@ from tgbot.config import load_config
 from tgbot.routes import register_all_routers
 
 
-
 logger = logging.getLogger(__name__)
 
 
 
-async def create_pool(user, password, database, host, echo=False):
+async def connect_to_database(user, password, database, host, echo=False):
     try:
-        connection = psycopg2.connect(
+        pool = await asyncpg.create_pool(
                 user=user,
                 password=password,
                 host=host,
@@ -24,7 +23,7 @@ async def create_pool(user, password, database, host, echo=False):
                 database=database
                 )
         logger.info(f"Подключение к базе данных прошло успешно.")
-        return connection
+        return pool
     except Exception:
         logger.info(f"Ошибка при подклчючении к DB")
 
@@ -43,7 +42,7 @@ async def main() -> None:
     else:
         storage = MemoryStorage()
 
-    connection = await create_pool(
+    pool = await connect_to_database(
             user=config.database.user,
             password=config.database.password,
             database=config.database.database,
@@ -53,13 +52,14 @@ async def main() -> None:
     bot = Bot(token=config.tg_bot.token)
     dp = Dispatcher(storage=storage)
 
-    register_all_routers(dp, config, connection)
+    register_all_routers(dp, config, pool)
 
     # Start.
     try:
         logger.info("Starting Bot!")
         await dp.start_polling(bot)
     finally:
+        await pool.close()
         await dp.storage.close()
         await bot.session.close()
 
