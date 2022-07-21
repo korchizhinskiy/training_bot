@@ -6,7 +6,7 @@ from tgbot.middlewares.role import AdminCheckerMiddleware
 
 
 
-def register_all_routers(dp: Dispatcher, config) -> None:
+def register_all_routers(dp: Dispatcher, config, connection) -> None:
     """Register routers into main router."""
     master_router = Router()
     # Setup MiddleWares.
