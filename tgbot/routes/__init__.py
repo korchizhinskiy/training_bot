@@ -3,6 +3,7 @@ from aiogram import Dispatcher, Router
 from tgbot.routes.admin.admin_menu import admin_menu_router
 from tgbot.routes.user.welcome import user_welcome_router
 from tgbot.middlewares.role import AdminCheckerMiddleware
+from tgbot.middlewares.database import DatabaseMiddleware
 
 
 
@@ -11,6 +12,7 @@ def register_all_routers(dp: Dispatcher, config, connection) -> None:
     master_router = Router()
     # Setup MiddleWares.
     master_router.message.outer_middleware(AdminCheckerMiddleware(config.tg_bot.admin_id))
+    master_router.message.outer_middleware(DatabaseMiddleware(connection))
     
     # Add local routers.
     master_router.include_router(admin_menu_router)
