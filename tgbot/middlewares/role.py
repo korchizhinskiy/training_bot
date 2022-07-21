@@ -28,6 +28,7 @@ class AdminCheckerMiddleware(BaseMiddleware):
 
         results = await handler(event, data)
 
+        del data["role"]
         return results
 
 
