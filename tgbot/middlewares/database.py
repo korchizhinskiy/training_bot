@@ -20,13 +20,14 @@ class DatabaseMiddleware(BaseMiddleware):
             event: Message,
             data: dict[str, Any]
             ) -> Any:
+        
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
 
-        data["database"] = await self.pool.acquire()
-        data["repo"] = Repo(self.pool)
+                data["database"] = connection
+                data["repo"] = Repo(connection)
 
-        result = await handler(event, data)
+                result = await handler(event, data)
 
-        del data["repo"]
-        if data["database"]:
-            await self.pool.release(data["database"])
-        return result
+                del data["repo"]
+                return result
