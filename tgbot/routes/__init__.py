@@ -12,7 +12,8 @@ def register_all_routers(dp: Dispatcher, config, connection) -> None:
     master_router = Router()
     # Setup MiddleWares.
     master_router.message.outer_middleware(AdminCheckerMiddleware(config.tg_bot.admin_id))
-    master_router.message.outer_middleware(DatabaseMiddleware(connection))
+    master_router.callback_query.outer_middleware(AdminCheckerMiddleware(config.tg_bot.admin_id))
+    master_router.message.middleware(DatabaseMiddleware(connection))
     
     # Add local routers.
     master_router.include_router(admin_menu_router)
