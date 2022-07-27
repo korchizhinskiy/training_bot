@@ -11,7 +11,6 @@ def get_menu_markup(buttons: list[list[Button]] ) -> InlineKeyboardMarkup:
     """Generate inline murkup by using."""
     keyboard_buttons = []
     for button_row in buttons:
-        print(button_row)
         temp_row = []
         for button in button_row:
             temp_row.append(InlineKeyboardButton(text=button.text, callback_data=button.callback_data))
