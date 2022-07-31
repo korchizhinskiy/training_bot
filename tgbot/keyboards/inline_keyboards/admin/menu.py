@@ -7,7 +7,7 @@ from aiogram.types.inline_keyboard_button import InlineKeyboardButton
 Button = namedtuple("Button", "text callback_data")
 
 
-def get_menu_markup(buttons: list[list[Button]] ) -> InlineKeyboardMarkup:
+async def get_menu_markup(buttons: list[list[Button]] ) -> InlineKeyboardMarkup:
     """Generate inline murkup by using."""
     keyboard_buttons = []
     for button_row in buttons:
