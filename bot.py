@@ -57,7 +57,7 @@ async def main() -> None:
     # Start.
     try:
         logger.info("Starting Bot!")
-        await dp.start_polling(bot)
+        await dp.start_polling(bot, parse_mode="HTML>")
     finally:
         await pool.close()
         await dp.storage.close()
