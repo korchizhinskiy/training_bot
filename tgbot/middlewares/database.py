@@ -21,7 +21,7 @@ class DatabaseMiddleware(BaseMiddleware):
             data: dict[str, Any]
             ) -> Any:
         
-        async with self.pool.acquire() as connection:
+        async with self.pool.acquire() as connection: # AttributeError TODO
             async with connection.transaction():
 
                 data["database"] = connection
