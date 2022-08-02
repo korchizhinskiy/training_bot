@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import asyncpg
-
 from aiogram import Bot, Dispatcher
 from aiogram.dispatcher.fsm.storage.memory import MemoryStorage
 
@@ -11,15 +10,13 @@ from tgbot.routes import register_all_routers
 
 logger = logging.getLogger(__name__)
 
-
-
 async def connect_to_database(user, password, database, host, echo=False):
     try:
         pool = await asyncpg.create_pool(
                 user=user,
                 password=password,
                 host=host,
-                port="5433",
+                port="5432",
                 database=database
                 )
         logger.info(f"Подключение к базе данных прошло успешно.")
@@ -49,7 +46,7 @@ async def main() -> None:
             host=config.database.host,
             )
 
-    bot = Bot(token=config.tg_bot.token)
+    bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
     dp = Dispatcher(storage=storage)
 
     register_all_routers(dp, config, pool)
@@ -57,7 +54,7 @@ async def main() -> None:
     # Start.
     try:
         logger.info("Starting Bot!")
-        await dp.start_polling(bot, parse_mode="HTML>")
+        await dp.start_polling(bot)
     finally:
         await pool.close()
         await dp.storage.close()
