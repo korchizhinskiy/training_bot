@@ -39,13 +39,13 @@ class Repo():
             if user[0]['user_first_name'] != user_first_name:
                 await self._update_user_info(user_id, user_first_name)
 
-            self.logger.info(f"Пользователь: \n"
+            self.logger.info(f"\nПользователь: \n"
                              f"С ID: {user[0]['user_id']}\n"
                              f"С именем: {user[0]['user_first_name']} найден.\n")
             return True
 
         else:
-            self.logger.info(f"Пользователь: \n"
+            self.logger.info(f"\nПользователь: \n"
                              f"С ID: {user_id}\n"
                              f"С именем: {user_first_name} занесен в базу данных.\n")
             return False
