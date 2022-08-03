@@ -3,7 +3,7 @@ from aiogram.types import Message
 
 
 
-class Validator_filter(BaseFilter):
+class ExerciseValidator(BaseFilter):
     """Filter for role of users."""
 
     async def __call__(self, message: Message) -> bool:
@@ -13,3 +13,12 @@ class Validator_filter(BaseFilter):
         else:
             message.answer("Введите корректное название!")
             return False
+
+
+# TODO: Check admin's authorization for command /admin
+class AuthorizationValidator(BaseFilter):
+    """Check authorization of admin in bot."""
+
+    async def __call__(self, message: Message) -> bool:
+        pass
+
