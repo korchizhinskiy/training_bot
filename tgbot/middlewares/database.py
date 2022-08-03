@@ -1,10 +1,11 @@
 from typing import Any, Awaitable, Callable
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
+from aiogram.dispatcher.flags.getter import get_flag
 from aiogram.types import Message
 from asyncpg import Pool
 
-from tgbot.services.repository import Repo
+from tgbot.services.repository import AdminRepo, Repo
 
 
 class DatabaseMiddleware(BaseMiddleware):
@@ -25,8 +26,16 @@ class DatabaseMiddleware(BaseMiddleware):
             async with connection.transaction():
 
                 data["database"] = connection
-                data["repo"] = Repo(connection)
-
+                database_type = get_flag(data, "database_type")
+                if database_type:
+                    match database_type:
+                        case "repo":
+                            data["repo"] = Repo(connection)
+                        case "admin_repo":
+                            data["repo"] = AdminRepo(connection)
+                else:
+                    data["repo"] = None
+                        
                 result = await handler(event, data)
 
                 del data["repo"]
