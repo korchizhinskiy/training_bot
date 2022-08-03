@@ -10,6 +10,8 @@ from tgbot.models.role import UserRole
 from tgbot.keyboards.inline_keyboards.admin.menu import Button, get_menu_markup
 from tgbot.states.admin.menu import AdminExerciseMenu
 
+from tgbot.services.repository import AdminRepo, Repo
+
 
 admin_menu_router = Router()
 
@@ -60,7 +62,7 @@ async def admin_add_exercise_read_name(message: Message, state: FSMContext):
         [Button(text="Отменить добавление", callback_data="exercises")]
         ])
     await message.answer(f"Вы ввели упражнение:\n<b>{exercise_name}</b>", reply_markup=markup)
-    await state.set_state('*')
+    await state.set_state(None)
 
 
 @admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="input_description")
@@ -75,6 +77,7 @@ async def admin_input_exercise_name(call: CallbackQuery, state: FSMContext):
 async def admin_input_discription(message: Message, state: FSMContext):
     """Read exercise name and update state's data."""
     state_data = await state.get_data()
+    await state.update_data(exercise_description=message.text)
     exercise_discription = message.text.strip()
     markup = await get_menu_markup([
         [Button(text="Подтвердить", callback_data="output_result")],
@@ -86,16 +89,18 @@ async def admin_input_discription(message: Message, state: FSMContext):
             f"Описание - {exercise_discription}",
             reply_markup=markup
            )
-    await state.clear()
+    await state.set_state(None)
 
-@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="output_result")
-async def print_result(call: CallbackQuery, state: FSMContext):
+@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="output_result", flags={"database_type": "admin_repo"})
+async def print_result(call: CallbackQuery, state: FSMContext, repo: AdminRepo):
     """Print result of exercise and add to database."""
     markup = await get_menu_markup([
         [Button(text="Добавить упражнение ещё", callback_data="add_exercise"), Button(text="Вернуться в меню", callback_data="menu")]
         ])
     await call.message.edit_text("Вы успешно добавили упражнение.", reply_markup=markup)
-    await state.clear()
+    state_data = await state.get_data()
+    print(state_data["exercise_name"])
+    await repo.add_exercise(exercise_name=state_data['exercise_name'], exercise_description=state_data['exercise_description'])
     
 
 @admin_menu_router.message(Role_Filter(user_role=UserRole.ADMIN))
