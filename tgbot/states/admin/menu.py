@@ -13,9 +13,7 @@ class AdminExerciseMenu(StatesGroup):
 
     class AddExercise(StatesGroup):
         """Add exercise Group."""
-        input_name = State()
         read_name = State()
-        input_description = State()
         read_description = State()
 
 
@@ -26,8 +24,14 @@ class AdminExerciseMenu(StatesGroup):
         input_description = State()
 
 
+    class DeleteExercise(StatesGroup):
+        """Change exercise info Group."""
+        read_name = State()
+
+
     """Exercise menu."""
     exercise_menu = State()
     add_exercise = AddExercise()
     change_exercise = ChangeExercise()
+    delete_exercise = DeleteExercise()
 
