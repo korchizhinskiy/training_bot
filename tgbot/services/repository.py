@@ -1,3 +1,4 @@
+from typing import Generator
 from asyncpg import Connection
 import logging
 
@@ -65,6 +66,11 @@ class Repo():
 
 class AdminRepo():
     """Administration database class."""
+    logger = logging.getLogger("AdminRepo")
+    logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+            )
 
     def __init__(self, connection: Connection):
         self.connection = connection
@@ -75,14 +81,19 @@ class AdminRepo():
         await self.connection.execute(
                 """
                 INSERT INTO exercises (exercise_name, exercise_description)
-                VALUES ($1, $2)
+                VALUES ($1, $2);
                 """, *(exercise_name, exercise_description)
                 )        
     
 
-    async def delete_exercise(self) -> None:
+    async def delete_exercise(self, exercise_name) -> str:
         """Delete exercise's information from database."""
-        pass
+        return await self.connection.execute(
+                """
+                DELETE FROM exercises
+                WHERE exercise_name = $1;
+                """, exercise_name
+                )
 
 
     async def change_exercise_info(self) -> None:
@@ -92,7 +103,15 @@ class AdminRepo():
 
     async def print_exercises(self) -> tuple[str]:
         """Output all exercises from database."""
-        return ('Return',)
+        exercises = await self.connection.fetch(
+                """
+                SELECT exercise_name from exercises;
+                """
+                )
+        result = tuple((exercise["exercise_name"] for exercise in exercises))
+        self.logger.info(result)
+        
+        return result
 
 
 
