@@ -96,9 +96,26 @@ class AdminRepo():
                 )
 
 
-    async def change_exercise_info(self) -> None:
+    async def change_exercise_info(self, exercise_name, new_exercise_name=None, new_exercise_description=None) -> None:
         """Change information about exercise in database."""
-        pass
+        if new_exercise_name:
+            await self.connection.execute(
+                    """
+                    UPDATE exercises
+                    SET exercise_name = $1
+                    WHERE exercise_name = $2
+                    """, *(new_exercise_name, exercise_name)
+                    )
+        else:
+            await self.connection.execute(
+                    """
+                    UPDATE exercises
+                    SET exercise_description = $1
+                    WHERE exercise_name = $2
+                    """, *(new_exercise_description, exercise_name)
+                    )
+
+        
     
 
     async def print_exercises(self) -> tuple[str]:
@@ -112,6 +129,20 @@ class AdminRepo():
         self.logger.info(result)
         
         return result
+
+
+    async def check_exercise(self, exercise_name) -> bool:
+        """ Check for the presence of an exercise. """
+        result = await self.connection.fetch(
+                """
+                SELECT exercise_name FROM exercises
+                WHERE exercise_name = $1;
+                """, exercise_name
+                )
+        if result:
+            return True
+        else: 
+            return False
 
 
 
