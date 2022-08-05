@@ -143,6 +143,92 @@ async def ask_exercise_name(call: CallbackQuery, repo: AdminRepo):
     await call.message.edit_text("<b>Список упражнений:</b>\n\n" + "\n".join(exercises))
 
 
+#!<--- Edit Exercise --->
+@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="change_exercise")
+async def ask_exercise_name(call: CallbackQuery, state: FSMContext):
+    """ Ask name of exercise. """
+    await call.message.edit_text("Введите название упражнения.")
+    await state.set_state(AdminExerciseMenu.change_exercise.select_exercise)
+
+
+@admin_menu_router.message(Role_Filter(user_role=UserRole.ADMIN), state=AdminExerciseMenu.change_exercise.select_exercise, flags={"database_type": "admin_repo"})
+async def select_action(message: Message, state: FSMContext, repo: AdminRepo):
+    exercise_name = message.text.strip().capitalize()
+    #// Check for the presence of an exercise.
+    if await repo.check_exercise(exercise_name):
+        await state.update_data(exercise_name=exercise_name)
+        markup = await get_menu_markup([
+            [Button(text="Название", callback_data="change_exercise_name"), Button(text="Описание", callback_data="change_exercise_description")]
+            ])
+        await message.answer("Выберите, что вы хотите изменить.", reply_markup=markup)
+    else:
+        markup = await get_menu_markup([
+            [Button(text="Изменить упражнение", callback_data="change_exercise"), Button(text="В меню", callback_data="menu")]
+            ])
+        await message.answer("Такого упражнения нет.", reply_markup=markup)
+    await state.set_state(None)
+
+        
+@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="change_exercise_name")
+async def ask_new_exercise_name(call: CallbackQuery, state: FSMContext):
+    """ Ask name of exercise. """
+    await call.message.edit_text("Введите новое название упражнения.")
+    await state.set_state(AdminExerciseMenu.change_exercise.read_name)
+
+
+@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="change_exercise_description")
+async def ask_new_exercise_desription(call: CallbackQuery, state: FSMContext):
+    """ Ask name of exercise. """
+    await call.message.edit_text("Введите новое описание упражнения.")
+    await state.set_state(AdminExerciseMenu.change_exercise.read_description)
+
+
+@admin_menu_router.message(Role_Filter(user_role=UserRole.ADMIN), state=AdminExerciseMenu.change_exercise.read_name)
+async def read_new_exercise_name(message: Message, state: FSMContext):
+    """ Read input name of exercise. """
+    new_exercise_name = message.text.strip().capitalize()
+    markup = await get_menu_markup([
+        [Button(text="Подтвердить", callback_data="change_exercise_name_result"), Button(text="Отменить", callback_data="menu")]
+        ])
+    await message.answer(f"Вы уверены, что хотите изменить название упражнения на:\n{new_exercise_name}", reply_markup=markup)
+    await state.update_data(new_exercise_name=new_exercise_name)
+    await state.set_state(None)
+
+
+@admin_menu_router.message(Role_Filter(user_role=UserRole.ADMIN), state=AdminExerciseMenu.change_exercise.read_description)
+async def read_new_exercise_description(message: Message, state: FSMContext):
+    """ Read input name of exercise. """
+    new_exercise_description = message.text.strip().capitalize()
+    markup = await get_menu_markup([
+        [Button(text="Подтвердить", callback_data="change_exercise_description_result"), Button(text="Отменить", callback_data="menu")]
+        ])
+    await message.answer(f"Вы уверены, что хотите изменить название упражнения на:\n{new_exercise_description}", reply_markup=markup)
+    await state.update_data(new_exercise_description=new_exercise_description)
+    await state.set_state(None)
+
+
+@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="change_exercise_name_result", flags={"database_type": "admin_repo"})
+async def result_change_exercise_name(call: CallbackQuery, state: FSMContext, repo: AdminRepo):
+    state_data = await state.get_data()
+    markup = await get_menu_markup([
+        [Button(text="В меню", callback_data="menu"), Button(text="Изменить другое", callback_data="change_exercise")]
+        ])
+    await call.message.edit_text(f"Название упражнения было изменено на {state_data['new_exercise_name']}", reply_markup=markup)
+    await repo.change_exercise_info(exercise_name=state_data['exercise_name'], new_exercise_name=state_data['new_exercise_name'])
+    await state.clear()
+
+
+@admin_menu_router.callback_query(Role_Filter(user_role=UserRole.ADMIN), text="change_exercise_description_result", flags={"database_type": "admin_repo"})
+async def result_change_exercise_description(call: CallbackQuery, state: FSMContext, repo: AdminRepo):
+    state_data = await state.get_data()
+    markup = await get_menu_markup([
+        [Button(text="В меню", callback_data="menu"), Button(text="Изменить другое", callback_data="change_exercise")]
+        ])
+    await call.message.edit_text(f"Название упражнения было изменено на {state_data['new_exercise_description']}", reply_markup=markup)
+    await repo.change_exercise_info(exercise_name=state_data['exercise_name'], new_exercise_description=state_data['new_exercise_description'])
+    await state.clear()
+
+
 @admin_menu_router.message(Role_Filter(user_role=UserRole.ADMIN))
 async def delete_false_message(message: Message):
     await message.delete()
