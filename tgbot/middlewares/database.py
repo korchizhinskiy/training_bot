@@ -5,7 +5,7 @@ from aiogram.dispatcher.flags.getter import get_flag
 from aiogram.types import Message
 from asyncpg import Pool
 
-from tgbot.services.repository import AdminRepo, Repo
+from tgbot.services.repository import AdminRepo, Repo, UserRepo
 
 
 class DatabaseMiddleware(BaseMiddleware):
@@ -33,6 +33,8 @@ class DatabaseMiddleware(BaseMiddleware):
                             data["repo"] = Repo(connection)
                         case "admin_repo":
                             data["repo"] = AdminRepo(connection)
+                        case "user_repo":
+                            data["repo"] = UserRepo(connection)
                 else:
                     data["repo"] = None
                         
