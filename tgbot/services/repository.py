@@ -1,4 +1,3 @@
-from typing import Generator
 from asyncpg import Connection
 import logging
 
@@ -15,7 +14,7 @@ class Repo():
         self.connection: Connection = connection
 
     
-    async def add_user(self, user_id, user_first_name) -> None:
+    async def add_user(self, user_id, user_first_name) -> bool:
         """Add user's info into database.'"""
         if not await self._is_user_in_database(user_id, user_first_name):
             await self.connection.execute(
@@ -24,6 +23,8 @@ class Repo():
                     VALUES ($1, $2);
                     """, *(user_id, user_first_name)
             )
+            return True
+        return False
 
 
     async def _is_user_in_database(self, user_id, user_first_name) -> bool:
@@ -62,6 +63,29 @@ class Repo():
                     """, *(user_first_name, user_id)
                 )
 
+
+class UserRepo():
+    """User database class."""
+    logger = logging.getLogger("UserRepo")
+    logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+            )
+
+    def __init__(self, connection: Connection):
+        self.connection = connection
+
+
+    async def print_exercise(self) -> tuple[str]:
+        """Output all exercises from database."""
+        exercises = await self.connection.fetch(
+                """
+                SELECT exercise_name from exercises;
+                """
+                )
+        result = tuple((exercise["exercise_name"] for exercise in exercises))
+        
+        return result
 
 
 class AdminRepo():
@@ -126,8 +150,6 @@ class AdminRepo():
                 """
                 )
         result = tuple((exercise["exercise_name"] for exercise in exercises))
-        self.logger.info(result)
-        
         return result
 
 
