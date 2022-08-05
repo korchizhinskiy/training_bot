@@ -19,9 +19,9 @@ class AdminExerciseMenu(StatesGroup):
 
     class ChangeExercise(StatesGroup):
         """Change exercise info Group."""
-        parameter_selection = State()
-        input_name = State()
-        input_description = State()
+        select_exercise = State()
+        read_name = State()
+        read_description = State()
 
 
     class DeleteExercise(StatesGroup):
