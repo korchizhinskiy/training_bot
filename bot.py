@@ -34,8 +34,8 @@ async def main() -> None:
     config = load_config("config_bot.ini")
 
     if config.tg_bot.use_redis:
-        storage = MemoryStorage()
-#       storage = RedisStorage()
+        storage = None
+#//     storage = RedisStorage()
     else:
         storage = MemoryStorage()
 
