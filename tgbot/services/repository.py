@@ -7,7 +7,7 @@ class Repo():
 
     logger = logging.getLogger("Repo")
     logging.basicConfig(
-            level=logging.INFO,
+            level=logging.DEBUG,
             format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
             )
     def __init__(self, connection: Connection):
@@ -68,7 +68,7 @@ class UserRepo():
     """User database class."""
     logger = logging.getLogger("UserRepo")
     logging.basicConfig(
-            level=logging.INFO,
+            level=logging.DEBUG,
             format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
             )
 
@@ -84,15 +84,40 @@ class UserRepo():
                 """
                 )
         result = tuple((exercise["exercise_name"] for exercise in exercises))
-        
         return result
+
+
+    async def print_chart_week_number(self, user_id) -> tuple[str]:
+        """ Output user's training. """
+        training = await self.connection.fetch(
+                """
+                SELECT (fk_week_number, fk_week_day, exercise, count_approaches, count_repetition) from users
+                INNER JOIN training
+                ON users.user_id = training.fk_user_id
+                """
+                )
+        return training
+
+    async def check_user_chart_week_number(self, user_id) -> bool | tuple:
+        """ Check user's chart. """
+        result = await self.connection.fetch(
+                """
+                SELECT DISTINCT (week_number) FROM weeks
+                WHERE fk_user_id = $1
+                """, user_id
+                )
+        if result:
+            weeks_list = tuple((weeks[0] for weeks in result )) 
+            return weeks_list
+        return False
+
 
 
 class AdminRepo():
     """Administration database class."""
     logger = logging.getLogger("AdminRepo")
     logging.basicConfig(
-            level=logging.INFO,
+            level=logging.DEBUG,
             format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
             )
 
