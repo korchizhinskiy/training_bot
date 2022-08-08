@@ -6,6 +6,7 @@ from aiogram.dispatcher.filters import Command
 
 from tgbot.filters.role import Role_Filter
 from tgbot.keyboards.inline_keyboards.admin.menu import Button, get_menu_markup
+from tgbot.misc.alias import DayOfWeek
 from tgbot.misc.callback_data import Chart, MyData
 from tgbot.models.role import UserRole
 
@@ -46,10 +47,9 @@ async def print_all_exercises(message: Message, repo: UserRepo) -> None:
 
 
 @user_menu_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"})
-async def print_training(message: Message, repo: UserRole) -> None:
+async def print_training(message: Message, repo: UserRole, bot) -> None:
     """ Print user's training from database. """
     pass
-
 @user_menu_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["chart"]), flags={"database_type": "user_repo"})
 async def change_chart(message: Message, repo: UserRepo) -> None:
     """ Set/change own chart. """
@@ -68,10 +68,17 @@ async def print_training(call: CallbackQuery, repo: UserRepo, callback_data: MyD
     """ Print user's training from database. """
 
     if callback_data.chart == Chart.week_chart:
-        result = await repo.print_chart_week_number(call.from_user.id)
-        logger.info(f"{result}")
-        for row in result:
-            await call.message.answer(f"{row[0][0]}")
+        training_list: str = ''
+        weeks_count = await repo.check_user_chart_week_number(call.from_user.id)
+        for week in weeks_count:
+            training_list += f"Неделя {week}-я:\n"
+            days = await repo.check_user_chart_week_day(call.from_user.id, week)
+            logger.info(f"{days = }")
+            for day in days:
+                day_name = DayOfWeek.get_value(day)
+                training_list += f"День недели - {day_name}\n"
+                exercises = await repo.check_user_chart_exercises(call.from_user.id, week, day)
+                for exercise in exercises:
+                    training_list += f"Упражнение {exercise[0][3]}\n{exercise[0][0]}\nПодходы: {exercise[0][1]}\nПовторения: {exercise[0][2]}\n"
+        await call.message.answer(training_list)
 
-
-        
