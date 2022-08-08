@@ -98,7 +98,7 @@ class UserRepo():
                 )
         return training
 
-    async def check_user_chart_week_number(self, user_id) -> bool | tuple:
+    async def check_user_chart_week_number(self, user_id) -> tuple[int]:
         """ Check user's chart. """
         result = await self.connection.fetch(
                 """
@@ -106,11 +106,34 @@ class UserRepo():
                 WHERE fk_user_id = $1
                 """, user_id
                 )
-        if result:
-            weeks_list = tuple((weeks[0] for weeks in result )) 
-            return weeks_list
-        return False
+        weeks_list = tuple((weeks[0] for weeks in result )) 
+        return weeks_list
 
+
+    async def check_user_chart_week_day(self, user_id, week_number) -> tuple[int]:
+        """ Check user's chart. """
+        result = await self.connection.fetch(
+                """
+                SELECT DISTINCT (fk_week_day) FROM training
+                WHERE fk_user_id = $1 AND fk_week_number = $2;
+                """, *(user_id, week_number)
+                )
+        days_list = tuple((day[0] for day in result)) 
+        self.logger.info(f"{days_list}")
+        return days_list
+
+
+    async def check_user_chart_exercises(self, user_id, week_number, week_day) -> tuple[int]:
+        """ Check user's chart. """
+        result = await self.connection.fetch(
+                """
+                SELECT (exercise, count_approaches, count_repetition, ordering) from training
+                WHERE fk_user_id = $1 AND fk_week_number = $2 AND fk_week_day = $3
+                ORDER BY ordering;
+                """, *(user_id, week_number, week_day)
+                )
+#        exercise_list = tuple((exercise[0] for exercise in result )) 
+        return result
 
 
 class AdminRepo():
