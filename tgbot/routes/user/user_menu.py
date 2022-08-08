@@ -1,9 +1,12 @@
+import logging
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.filters import Command
 
 from tgbot.filters.role import Role_Filter
+from tgbot.keyboards.inline_keyboards.admin.menu import Button, get_menu_markup
+from tgbot.misc.callback_data import Chart, MyData
 from tgbot.models.role import UserRole
 
 from tgbot.services.repository import Repo, UserRepo
@@ -11,6 +14,12 @@ from tgbot.services.repository import Repo, UserRepo
 
 
 user_menu_router = Router()
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        )
+
 # Can use other variants:
 # @admin_welcome_router.message(Role_Filter(user_role=[UserRole.ADMIN]), commands=["check"])
 # @admin_welcome_router.message(Role_Filter(user_role=[UserRole.ADMIN, UserRole.USER]), commands=["check"])
@@ -30,9 +39,39 @@ async def admin_welcome(message: Message, repo: Repo) -> None:
 
 
 @user_menu_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["exercises"]), flags={"database_type": "user_repo"})
-async def admin_welcome(message: Message, repo: UserRepo) -> None:
+async def print_all_exercises(message: Message, repo: UserRepo) -> None:
+    """ Print all exercises. """
     exercises = await repo.print_exercise()
     await message.answer("<b>Весь список упражнений.</b>" + "\n\n⦿ " + "\n⦿ ".join(exercises))
 
-    
 
+@user_menu_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"})
+async def print_training(message: Message, repo: UserRole) -> None:
+    """ Print user's training from database. """
+    pass
+
+@user_menu_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["chart"]), flags={"database_type": "user_repo"})
+async def change_chart(message: Message, repo: UserRepo) -> None:
+    """ Set/change own chart. """
+    if await repo.check_user_chart_week_number(message.from_user.id):
+        markup = await get_menu_markup([
+            [Button(text="График тренировок", callback_data=MyData(chart=Chart.week_chart).pack())],
+            ])
+        await message.answer("Изменение графика", reply_markup=markup)
+    else:
+        pass
+        #TODO: Add training into user's database.
+
+
+@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), MyData.filter(), flags={"database_type": "user_repo"})
+async def print_training(call: CallbackQuery, repo: UserRepo, callback_data: MyData):
+    """ Print user's training from database. """
+
+    if callback_data.chart == Chart.week_chart:
+        result = await repo.print_chart_week_number(call.from_user.id)
+        logger.info(f"{result}")
+        for row in result:
+            await call.message.answer(f"{row[0][0]}")
+
+
+        
