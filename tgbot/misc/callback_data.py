@@ -2,9 +2,10 @@ from enum import Enum
 from aiogram.dispatcher.filters.callback_data import CallbackData
 
 
-class Chart(Enum):
-    week_chart = "print_week_chart"
+class Training(Enum):
+    delete_exercise_from_day = "delete_exercise_from_day"
+    add_exercise_to_day = "add_exercise_to_day"
 
     
-class MyData(CallbackData, prefix="my_data"):
-    chart: Chart
+class MyCallbackData(CallbackData, prefix="my_data"):
+    training: str
