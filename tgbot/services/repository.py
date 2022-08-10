@@ -75,6 +75,15 @@ class UserRepo():
     def __init__(self, connection: Connection):
         self.connection = connection
 
+    async def add_exercise_into_training_day(self, user_id, week_number, week_day, exercise_name, count_approaches, count_repetition) -> None:
+        """Output all exercises from database."""
+        await self.connection.execute(
+                """
+                INSERT INTO training (fk_user_id, fk_week_number, fk_week_day, exercise, count_approaches, count_repetition)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                """, *(user_id, int(week_number), int(week_day), exercise_name, int(count_approaches), int(count_repetition))
+                )
+
 
     async def print_exercise(self) -> tuple[str]:
         """Output all exercises from database."""
