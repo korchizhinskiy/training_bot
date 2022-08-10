@@ -13,12 +13,11 @@ class DayOfWeek(Enum):
 
 
     @classmethod
-    def get_value(cls, number) -> str:
+    def get_value(cls, number: int | str) -> str:
         """ Get string - day of week. """
         for day in cls:
-            if day.value[0] == number:
+            if day.value[0] == int(number):
                 return day.value[1]
         else:
             raise ValueError("Вы вводите числа меньше 1 или больше 9.")
 
-print(DayOfWeek.get_value(10))
