@@ -4,13 +4,18 @@ from aiogram.dispatcher.fsm.state import State, StatesGroup
 
 class UserTrainingMenu(StatesGroup):
 
-    class AddExercise(StatesGroup):
+    class AddExerciseInTrainingDay(StatesGroup):
         """Add exercise Group."""
         read_week = State()
         read_day = State()
         read_exercise_name = State()
         read_count_approaches = State()
         read_count_repetition = State()
+
+
+    class DeleteExerciseFromTrainingDay(StatesGroup):
+        """Delete exercise Group."""
+        read_name = State()
 
 
     class AddTrainingDay(StatesGroup):
@@ -32,18 +37,11 @@ class UserTrainingMenu(StatesGroup):
         read_description = State()
 
 
-    class DeleteExercise(StatesGroup):
-        """Change exercise info Group."""
-        read_name = State()
 
-
-    """Exercise menu."""
-    exercise_menu = State()
     choice_of_changing = State()
-    add_exercise = AddExercise()
+    add_exercise = AddExerciseInTrainingDay()
+    delete_exercise = DeleteExerciseFromTrainingDay()
     add_training_day = AddTrainingDay()
     delete_training_day = DeleteTrainingDay()
-    change_exercise = ChangeExercise()
-    delete_exercise = DeleteExercise()
 
 
