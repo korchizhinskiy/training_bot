@@ -3,6 +3,7 @@ from aiogram import Router
 from aiogram.types import CallbackQuery, Message
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.filters import Command
+from magic_filter import F
 
 from tgbot.filters.role import Role_Filter
 from tgbot.keyboards.inline_keyboards.admin.menu import Button, get_menu_markup
@@ -136,7 +137,8 @@ async def change_chart(message: Message, repo: UserRepo, state: FSMContext) -> N
     if await repo.check_user_chart_week_number(message.from_user.id):
         markup = await get_menu_markup([
             [Button(text="График тренировок", callback_data=ChartCallbackData(chart="training_chart").pack())],
-            [Button(text="Добавление тренировочного дня", callback_data=ChartCallbackData(chart="add_training_day").pack())]
+            [Button(text="Добавление тренировочного дня", callback_data=ChartCallbackData(chart="add_training_day").pack())],
+            [Button(text="Удаление тренировочного дня", callback_data=ChartCallbackData(chart="delete_training_day").pack())]
             ])
         await message.answer("Изменение графика", reply_markup=markup)
     else:
@@ -175,30 +177,57 @@ async def choice_of_changin_chart(call: CallbackQuery, repo: UserRepo, callback_
             ])
         await call.message.edit_text("Выберите неделю для добавления", reply_markup=markup)
         await state.set_state(UserTrainingMenu.add_training_day.choice_of_week)
+
+    elif callback_data.chart == "delete_training_day":
+        weeks = await repo.check_user_chart_week_number(call.from_user.id)
+        markup = await get_menu_markup([
+            [Button(text=f"{week}-я неделя", callback_data=ChartCallbackData(chart=f"{week}_week").pack())] for week in weeks
+            ])
+        await call.message.edit_text("Выберите неделю для удаления тренировочного дня", reply_markup=markup)
+        await state.set_state(UserTrainingMenu.delete_training_day.choice_of_week)
+
         
 
-@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), ChartCallbackData.filter(), 
+@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), ChartCallbackData.filter(F.chart.split('_')[1] == "week"), 
                                  state=UserTrainingMenu.add_training_day.choice_of_week, flags={"database_type": "user_repo"})
 async def add_chart_day(call: CallbackQuery, repo: UserRepo, callback_data: ChartCallbackData, state: FSMContext) -> None:
-    if callback_data.chart.split('_')[1] == "week": # TODO: May be o not check this.
-        week_number = int(callback_data.chart.split('_')[0]) #// Get number of week.
-        await state.update_data(week_number=week_number)
-        days = await repo.check_user_chart_week_day(call.from_user.id, week_number)
-        unused_days = set(days).symmetric_difference({1, 2, 3, 4, 5, 6, 7})
-        markup = await get_menu_markup([
-           [Button(text=f"{DayOfWeek.get_value(day)}", callback_data=ChartCallbackData(chart=f"{day}_day").pack())] for day in unused_days 
-            ])
-        await call.message.edit_text("Выберите день недели", reply_markup=markup)
-        await state.set_state(UserTrainingMenu.add_training_day.choice_of_day)
+    week_number = int(callback_data.chart.split('_')[0]) #// Get number of week.
+    await state.update_data(week_number=week_number)
+    days = await repo.check_user_chart_week_day(call.from_user.id, week_number)
+    unused_days = set(days).symmetric_difference({1, 2, 3, 4, 5, 6, 7})
+    markup = await get_menu_markup([
+       [Button(text=f"{DayOfWeek.get_value(day)}", callback_data=ChartCallbackData(chart=f"{day}_day").pack())] for day in unused_days 
+        ])
+    await call.message.edit_text("Выберите день недели", reply_markup=markup)
+    await state.set_state(UserTrainingMenu.add_training_day.choice_of_day)
 
 
-@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), ChartCallbackData.filter(), 
+@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), ChartCallbackData.filter(F.chart.split('_')[1] == "day"), 
                                  state=UserTrainingMenu.add_training_day.choice_of_day, flags={"database_type": "user_repo"})
-async def add_chart_day(call: CallbackQuery, repo: UserRepo, callback_data: ChartCallbackData, state: FSMContext) -> None:
-    if callback_data.chart.split('_')[1] == "day":
-        week_day = int(callback_data.chart.split('_')[0])
-        state_data = await state.get_data()
-        await call.message.edit_text(f"День недели {DayOfWeek.get_value(week_day)} добавлен в неделю № {state_data['week_number']}")
-        await repo.add_training_day(call.from_user.id, state_data['week_number'], week_day)
+async def result_of_add_day(call: CallbackQuery, repo: UserRepo, callback_data: ChartCallbackData, state: FSMContext) -> None:
+    week_day = int(callback_data.chart.split('_')[0])
+    state_data = await state.get_data()
+    await call.message.edit_text(f"День недели {DayOfWeek.get_value(week_day)} добавлен в неделю № {state_data['week_number']}")
+    await repo.add_training_day(call.from_user.id, state_data['week_number'], week_day)
 
 
+@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), ChartCallbackData.filter(F.chart.split('_')[1] == "week"), 
+                                 state=UserTrainingMenu.delete_training_day.choice_of_week, flags={"database_type": "user_repo"})
+async def delete_chart_day(call: CallbackQuery, repo: UserRepo, callback_data: ChartCallbackData, state: FSMContext) -> None:
+    week_number = int(callback_data.chart.split('_')[0]) #// Get number of week.
+    await state.update_data(week_number=week_number)
+    days = await repo.check_user_chart_week_day(call.from_user.id, week_number)
+    markup = await get_menu_markup([
+       [Button(text=f"{DayOfWeek.get_value(day)}", callback_data=ChartCallbackData(chart=f"{day}_day").pack())] for day in days
+        ])
+    await call.message.edit_text("Выберите день недели", reply_markup=markup)
+    await state.set_state(UserTrainingMenu.delete_training_day.choice_of_day)
+
+
+@user_menu_router.callback_query(Role_Filter(user_role=UserRole.USER), ChartCallbackData.filter(F.chart.split('_')[1] == "day"), 
+                                 state=UserTrainingMenu.delete_training_day.choice_of_day, flags={"database_type": "user_repo"})
+async def result_of_delete_day(call: CallbackQuery, repo: UserRepo, callback_data: ChartCallbackData, state: FSMContext) -> None:
+    week_day = int(callback_data.chart.split('_')[0])
+    state_data = await state.get_data()
+    await call.message.edit_text(f"День недели {DayOfWeek.get_value(week_day)} удален из недели № {state_data['week_number']}")
+    await repo.delete_training_day(call.from_user.id, state_data['week_number'], week_day)
