@@ -136,7 +136,19 @@ class UserRepo():
                 )
         weeks_list = tuple((weeks[0] for weeks in result )) 
         return weeks_list
+    
 
+    async def get_maximum_week_number(self, user_id) -> int:
+        """ Get maximum week in table for user. """
+        week = await self.connection.fetchval(
+                """
+                SELECT MAX(week_number) from weeks
+                WHERE fk_user_id = $1;
+                """, user_id
+                )
+        self.logger.debug(f"Результат - {week}")
+        return week
+    
 
     async def check_user_chart_week_day(self, user_id, week_number) -> tuple[int]:
         """ Check user's chart. """
