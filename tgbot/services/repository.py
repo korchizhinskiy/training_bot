@@ -89,7 +89,17 @@ class UserRepo():
         await self.connection.execute(
                 """
                 INSERT INTO weeks (fk_user_id, week_number, week_day)
-                VALUES ($1, $2, $3)
+                VALUES ($1, $2, $3);
+                """, *(user_id, week_number, week_day)
+                )
+
+
+    async def delete_training_day(self, user_id, week_number, week_day) -> None:
+        """ Add training day into weeks table. """
+        await self.connection.execute(
+                """
+                DELETE FROM weeks
+                WHERE fk_user_id = $1 AND week_number = $2 AND week_day = $3;
                 """, *(user_id, week_number, week_day)
                 )
 
