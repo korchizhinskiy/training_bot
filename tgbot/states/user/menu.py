@@ -13,6 +13,12 @@ class UserTrainingMenu(StatesGroup):
         read_count_repetition = State()
 
 
+    class AddTrainingDay(StatesGroup):
+        """Add training day Group."""
+        choice_of_week = State()
+        choice_of_day = State()
+
+
     class ChangeExercise(StatesGroup):
         """Change exercise info Group."""
         select_exercise = State()
@@ -27,7 +33,10 @@ class UserTrainingMenu(StatesGroup):
 
     """Exercise menu."""
     exercise_menu = State()
+    choice_of_changing = State()
     add_exercise = AddExercise()
+    add_training_day = AddTrainingDay()
     change_exercise = ChangeExercise()
     delete_exercise = DeleteExercise()
+
 
