@@ -84,6 +84,15 @@ class UserRepo():
                 """, *(user_id, int(week_number), int(week_day), exercise_name, int(count_approaches), int(count_repetition))
                 )
 
+    async def add_training_day(self, user_id, week_number, week_day) -> None:
+        """ Add training day into weeks table. """
+        await self.connection.execute(
+                """
+                INSERT INTO weeks (fk_user_id, week_number, week_day)
+                VALUES ($1, $2, $3)
+                """, *(user_id, week_number, week_day)
+                )
+
 
     async def print_exercise(self) -> tuple[str]:
         """Output all exercises from database."""
@@ -123,8 +132,8 @@ class UserRepo():
         """ Check user's chart. """
         result = await self.connection.fetch(
                 """
-                SELECT DISTINCT (fk_week_day) FROM training
-                WHERE fk_user_id = $1 AND fk_week_number = $2;
+                SELECT DISTINCT (week_day) FROM weeks
+                WHERE fk_user_id = $1 AND week_number = $2;
                 """, *(user_id, week_number)
                 )
         days_list = tuple((day[0] for day in result)) 
