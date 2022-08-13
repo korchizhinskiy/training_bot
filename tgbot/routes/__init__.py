@@ -1,8 +1,8 @@
 from aiogram import Dispatcher, Router
 
 from tgbot.routes.admin.admin_menu import admin_menu_router
-from tgbot.routes.user.menu import chart_router
-from tgbot.routes.user.menu import training_router
+from tgbot.routes.user.menu.chart import chart_router
+from tgbot.routes.user.menu.training import training_router
 from tgbot.middlewares.role import AdminCheckerMiddleware
 from tgbot.middlewares.database import DatabaseMiddleware
 
