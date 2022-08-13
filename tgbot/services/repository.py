@@ -147,7 +147,10 @@ class UserRepo():
                 """, user_id
                 )
         self.logger.debug(f"Результат - {week}")
-        return week
+        if week:
+            return week
+        else: 
+            return 0
     
 
     async def check_user_chart_week_day(self, user_id, week_number) -> tuple[int]:
