@@ -24,7 +24,6 @@ async def connect_to_database(user, password, database, host, echo=False):
     except Exception:
         logger.info(f"Ошибка при подклчючении к DB")
 
-
 async def main() -> None:
     """Defaul action for starting bot."""
     logging.basicConfig(
