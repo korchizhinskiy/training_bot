@@ -38,7 +38,7 @@ async def change_chart(message: Message, repo: UserRepo, state: FSMContext) -> N
         markup = await get_menu_markup([
             [Button(text="Добавление тренировочного дня", callback_data=ChartCallbackData(chart="add_training_day").pack())]
             ])
-        await message.answer("Изменение графика", reply_markup=markup)
+        await message.answer("Изменение тренировочной недели", reply_markup=markup)
 
     await state.set_state(UserTrainingMenu.choice_of_changing)
 
@@ -69,7 +69,7 @@ async def choice_of_changin_chart(call: CallbackQuery, repo: UserRepo, callback_
         weeks = await repo.check_user_chart_week_number(call.from_user.id)
         week_markup = [[Button(text=f"{week}-я неделя", callback_data=ChartCallbackData(chart=f"{week}_week").pack())] for week in weeks]
         markup = await get_menu_markup([
-            [Button(text=f"Альтернативная неделя", callback_data=ChartCallbackData(chart=f"add_week").pack())],
+            [Button(text=f"Добавить неделю", callback_data=ChartCallbackData(chart=f"add_week").pack())],
             *week_markup
             ])
         await call.message.edit_text("Выберите неделю для добавления", reply_markup=markup)
