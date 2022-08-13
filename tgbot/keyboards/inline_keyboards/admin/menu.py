@@ -6,7 +6,7 @@ from aiogram.types.inline_keyboard_button import InlineKeyboardButton
 
 Button = namedtuple("Button", "text callback_data")
 
-
+# TODO: Remove from admin dir to common dir (../) and use in user/admin routers.
 async def get_menu_markup(buttons: list[list[Button]] ) -> InlineKeyboardMarkup:
     """Generate inline murkup by using."""
     keyboard_buttons = []
