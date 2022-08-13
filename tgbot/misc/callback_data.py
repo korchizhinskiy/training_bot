@@ -7,3 +7,7 @@ class ExerciseCallbackData(CallbackData, prefix="training_data"):
 
 class ChartCallbackData(CallbackData, prefix="chart_data"):
     chart: str
+
+class ExercisePaginationCallbackData(CallbackData, prefix="exercise_pagination_data"):
+    page_number: int
+
