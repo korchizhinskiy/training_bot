@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from asyncpg import Connection
 import logging
 
@@ -104,17 +105,6 @@ class UserRepo():
                 )
 
 
-    async def print_exercise(self) -> tuple[str]:
-        """Output all exercises from database."""
-        exercises = await self.connection.fetch(
-                """
-                SELECT exercise_name from exercises;
-                """
-                )
-        result = tuple((exercise["exercise_name"] for exercise in exercises))
-        return result
-
-
     async def print_chart_week_number(self, user_id) -> tuple[str]:
         """ Output user's training. """
         training = await self.connection.fetch(
@@ -151,6 +141,27 @@ class UserRepo():
             return week
         else: 
             return 0
+
+
+    async def get_exercises(self) -> tuple[str]:
+        """ Get all exercises from table. """
+        exercises = await self.connection.fetch(
+                """
+                SELECT (exercise_name) from exercises
+                """
+                )
+        return tuple(exercise['exercise_name'] for exercise in exercises)
+
+
+    async def get_exercise_description(self, exercise_name) -> str:
+        """ Get exercise description by exercise name. """
+        description = await self.connection.fetchrow(
+                """
+                SELECT exercise_description FROM exercises
+                WHERE exercise_name = $1;
+                """, exercise_name
+                )
+        return description[0]
     
 
     async def check_user_chart_week_day(self, user_id, week_number) -> tuple[int]:
