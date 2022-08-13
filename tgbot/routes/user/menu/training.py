@@ -41,13 +41,6 @@ async def admin_welcome(message: Message, repo: Repo) -> None:
         await message.answer(f"{message.from_user.first_name.capitalize()}, привет. Снова рад встрече. Помнишь, как мною пользоваться? 👽 ")
 
 
-@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["exercises"]), flags={"database_type": "user_repo"})
-async def print_all_exercises(message: Message, repo: UserRepo) -> None:
-    """ Print all exercises. """
-    exercises = await repo.print_exercise()
-    await message.answer("<b>Весь список упражнений.</b>" + "\n\n⦿ " + "\n⦿ ".join(exercises))
-
-
 #!<--- TRAINING --->
 @training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"})
 async def change_training_day(message: Message, repo: UserRole, state: FSMContext) -> None:
