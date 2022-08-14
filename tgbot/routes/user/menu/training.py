@@ -1,14 +1,15 @@
-
+# type: ignore
 import logging
 from aiogram import Router
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, Update
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.filters import Command
 
 from tgbot.filters.role import Role_Filter
 from tgbot.keyboards.inline_keyboards.admin.menu import Button, get_menu_markup
 from tgbot.misc.alias import DayOfWeek
-from tgbot.misc.callback_data import ExerciseCallbackData
+from tgbot.misc.callback_data import ExerciseCallbackData, ExercisePaginationCallbackData
+from tgbot.misc.pagination import get_pagination
 from tgbot.models.role import UserRole
 
 from tgbot.services.repository import Repo, UserRepo
@@ -27,7 +28,7 @@ logging.basicConfig(
 # @admin_welcome_router.message(Role_Filter(user_role=[UserRole.ADMIN]), commands=["check"])
 # @admin_welcome_router.message(Role_Filter(user_role=[UserRole.ADMIN, UserRole.USER]), commands=["check"])
 
-@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["start"]), flags={"database_type": "repo"})
+@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["start"]), flags={"database_type": "repo"}) # pyright: ignore
 async def admin_welcome(message: Message, repo: Repo) -> None:
     if await repo.add_user(message.from_user.id, message.from_user.first_name):
         await message.answer(
@@ -42,7 +43,7 @@ async def admin_welcome(message: Message, repo: Repo) -> None:
 
 
 #!<--- TRAINING --->
-@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"})
+@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"}) #  pyright: ignore
 async def change_training_day(message: Message, repo: UserRole, state: FSMContext) -> None:
     """ Print user's training from database. """
     markup = await get_menu_markup([
@@ -53,7 +54,7 @@ async def change_training_day(message: Message, repo: UserRole, state: FSMContex
     await state.set_state(UserTrainingMenu.choice_of_changing)
 
 
-@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), state=UserTrainingMenu.choice_of_changing,
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), state=UserTrainingMenu.choice_of_changing, # pyright: ignore
                                  flags={"database_type": "user_repo"})
 async def choice_of_change_week(call: CallbackQuery, repo: UserRepo, callback_data: ExerciseCallbackData, state: FSMContext) -> None:
     """ Answer for callback query of change training days. """
@@ -65,11 +66,11 @@ async def choice_of_change_week(call: CallbackQuery, repo: UserRepo, callback_da
         markup = await get_menu_markup([
             [Button(text=f"{week}-я неделя", callback_data=ExerciseCallbackData(training=f"{week}_week").pack())] for week in weeks
             ])
-        await call.message.edit_text("Выберите неделю, которую хотите поменять.", reply_markup=markup)
+        await call.message.edit_text("Выберите неделю, которую хотите поменять.", reply_markup=markup) # pyright: ignore
         await state.set_state(UserTrainingMenu.add_exercise.read_week)
 
 
-@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), 
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(),  # pyright: ignore
         state=UserTrainingMenu.add_exercise.read_week, flags={"database_type": "user_repo"})
 async def choice_of_change_day(call: CallbackQuery, repo: UserRepo, callback_data: ExerciseCallbackData, state: FSMContext) -> None:
     """ Ask about days of changing. """
@@ -84,34 +85,41 @@ async def choice_of_change_day(call: CallbackQuery, repo: UserRepo, callback_dat
     await state.set_state(UserTrainingMenu.add_exercise.read_day)
 
 
-@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), 
-                                 state=UserTrainingMenu.add_exercise.read_day)
-async def ask_exercise_name(call: CallbackQuery, callback_data: ExerciseCallbackData, state: FSMContext) -> None:
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), state=UserTrainingMenu.add_exercise.read_day, flags={"database_type": "user_repo"})
+async def ask_exercise_name(call: CallbackQuery, state: FSMContext, callback_data: ExerciseCallbackData, repo: UserRepo) -> None:
     """ Ask about days of changing. """
     #// Get number of day.
     day = callback_data.training
     await state.update_data(day=day)
-    await call.message.edit_text("Введите название упражнения")
+    markup = await get_pagination(repo, state, callback_data=ExercisePaginationCallbackData(page_number=1))
+    await call.message.edit_text("Выберите название упражнения", reply_markup=markup)
     await state.set_state(UserTrainingMenu.add_exercise.read_exercise_name)
 
 
-@training_router.message(Role_Filter(user_role=UserRole.USER), state=UserTrainingMenu.add_exercise.read_exercise_name)
-async def ask_exercise_count_approaches(message: Message, state: FSMContext) -> None:
-    exercise_name = message.text.strip().capitalize()
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExercisePaginationCallbackData.filter(), state=UserTrainingMenu.add_exercise.read_exercise_name, flags={"database_type": "user_repo"})
+async def get_pagination_of_exercise(call: CallbackQuery, callback_data: ExercisePaginationCallbackData, state: FSMContext, repo: UserRepo):
+    markup = await get_pagination(repo, state, callback_data)
+    await call.message.edit_text("Выберите название упражнения", reply_markup=markup)
+
+
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), state=UserTrainingMenu.add_exercise.read_exercise_name)
+async def ask_exercise_count_approaches(call: CallbackQuery, state: FSMContext, event_update: Update) -> None:
+    exercise_name = event_update.callback_query.data
     await state.update_data(exercise_name=exercise_name)
-    await message.answer("Введите количество подходов")
+    await call.message.edit_text("Введите количество подходов")
     await state.set_state(UserTrainingMenu.add_exercise.read_count_approaches)
 
 
-@training_router.message(Role_Filter(user_role=UserRole.USER), state=UserTrainingMenu.add_exercise.read_count_approaches)
+@training_router.message(Role_Filter(user_role=UserRole.USER), state=UserTrainingMenu.add_exercise.read_count_approaches) # pyright: ignore
 async def ask_exercise_count_repetition(message: Message, state: FSMContext) -> None:
     exercise_count_approaches = message.text.strip()
     await state.update_data(exercise_count_approaches=exercise_count_approaches)
     await message.answer("Введите количество повторений")
     await state.set_state(UserTrainingMenu.add_exercise.read_count_repetition)
 
+
 #TODO: Add ordering
-@training_router.message(Role_Filter(user_role=UserRole.USER), state=UserTrainingMenu.add_exercise.read_count_repetition, flags={"database_type": "user_repo"})
+@training_router.message(Role_Filter(user_role=UserRole.USER), state=UserTrainingMenu.add_exercise.read_count_repetition, flags={"database_type": "user_repo"}) # pyright: ignore
 async def output_result_of_add_exercise(message: Message, state: FSMContext, repo: UserRepo) -> None:
     exercise_count_repetition = message.text.strip()
     state_data = await state.get_data()
