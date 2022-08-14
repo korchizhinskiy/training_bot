@@ -28,7 +28,7 @@ logging.basicConfig(
 # @admin_welcome_router.message(Role_Filter(user_role=[UserRole.ADMIN]), commands=["check"])
 # @admin_welcome_router.message(Role_Filter(user_role=[UserRole.ADMIN, UserRole.USER]), commands=["check"])
 
-@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["start"]), flags={"database_type": "repo"}) # pyright: ignore
+@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["start"]), flags={"database_type": "repo"})
 async def admin_welcome(message: Message, repo: Repo) -> None:
     if await repo.add_user(message.from_user.id, message.from_user.first_name):
         await message.answer(
@@ -43,7 +43,7 @@ async def admin_welcome(message: Message, repo: Repo) -> None:
 
 
 #!<--- TRAINING --->
-@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"}) #  pyright: ignore
+@training_router.message(Role_Filter(user_role=UserRole.USER), Command(commands=["training"]), flags={"database_type": "user_repo"})
 async def change_training_day(message: Message, repo: UserRole, state: FSMContext) -> None:
     """ Print user's training from database. """
     markup = await get_menu_markup([
@@ -54,7 +54,7 @@ async def change_training_day(message: Message, repo: UserRole, state: FSMContex
     await state.set_state(UserTrainingMenu.choice_of_changing)
 
 
-@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), state=UserTrainingMenu.choice_of_changing, # pyright: ignore
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(), state=UserTrainingMenu.choice_of_changing,
                                  flags={"database_type": "user_repo"})
 async def choice_of_change_week(call: CallbackQuery, repo: UserRepo, callback_data: ExerciseCallbackData, state: FSMContext) -> None:
     """ Answer for callback query of change training days. """
@@ -63,14 +63,19 @@ async def choice_of_change_week(call: CallbackQuery, repo: UserRepo, callback_da
 
     elif callback_data.training == "add_exercise_to_training_day":
         weeks = await repo.check_user_chart_week_number(call.from_user.id)
-        markup = await get_menu_markup([
-            [Button(text=f"{week}-я неделя", callback_data=ExerciseCallbackData(training=f"{week}_week").pack())] for week in weeks
-            ])
-        await call.message.edit_text("Выберите неделю, которую хотите поменять.", reply_markup=markup) # pyright: ignore
-        await state.set_state(UserTrainingMenu.add_exercise.read_week)
+
+        if not weeks:
+            await call.message.edit_text("Добавьте для начала тенировочный день.")
+            await state.clear()
+        else:
+            markup = await get_menu_markup([
+                [Button(text=f"{week}-я неделя", callback_data=ExerciseCallbackData(training=f"{week}_week").pack())] for week in weeks
+                ])
+            await call.message.edit_text("Выберите неделю, которую хотите поменять.", reply_markup=markup)
+            await state.set_state(UserTrainingMenu.add_exercise.read_week)
 
 
-@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(),  # pyright: ignore
+@training_router.callback_query(Role_Filter(user_role=UserRole.USER), ExerciseCallbackData.filter(),
         state=UserTrainingMenu.add_exercise.read_week, flags={"database_type": "user_repo"})
 async def choice_of_change_day(call: CallbackQuery, repo: UserRepo, callback_data: ExerciseCallbackData, state: FSMContext) -> None:
     """ Ask about days of changing. """
