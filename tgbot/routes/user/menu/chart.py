@@ -1,3 +1,4 @@
+# type: ignore
 import logging
 from aiogram import Router
 from aiogram.types import CallbackQuery, Message
@@ -108,7 +109,7 @@ async def add_chart_day(call: CallbackQuery, repo: UserRepo, callback_data: Char
 async def result_of_add_day(call: CallbackQuery, repo: UserRepo, callback_data: ChartCallbackData, state: FSMContext) -> None:
     week_day = int(callback_data.chart.split('_')[0])
     state_data = await state.get_data()
-    await call.message.edit_text(f"День недели {DayOfWeek.get_value(week_day)} добавлен в неделю № {state_data['week_number']}")
+    await call.message.edit_text(f"День недели {DayOfWeek.get_value(week_day)} добавлен в неделю № {state_data['week_number']}\nЧтобы добавить упражнение в тренировочный день - /training")
     await repo.add_training_day(call.from_user.id, state_data['week_number'], week_day)
 
 
