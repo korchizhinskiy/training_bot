@@ -1,4 +1,3 @@
-from collections.abc import Generator
 from asyncpg import Connection
 import logging
 
@@ -76,14 +75,32 @@ class UserRepo():
     def __init__(self, connection: Connection):
         self.connection = connection
 
-    async def add_exercise_into_training_day(self, user_id, week_number, week_day, exercise_name, count_approaches, count_repetition) -> None:
+    async def add_exercise_into_training_day(self, user_id, week_number, 
+                                             week_day, exercise_name, 
+                                             count_approaches, count_repetition
+                                             ) -> None:
         """Output all exercises from database."""
         await self.connection.execute(
                 """
-                INSERT INTO training (fk_user_id, fk_week_number, fk_week_day, exercise, count_approaches, count_repetition)
+                INSERT INTO training (fk_user_id, fk_week_number, fk_week_day,
+                                      exercise, count_approaches,
+                                      count_repetition)
                 VALUES ($1, $2, $3, $4, $5, $6)
-                """, *(user_id, int(week_number), int(week_day), exercise_name, int(count_approaches), int(count_repetition))
+                """, *(user_id, int(week_number), int(week_day),
+                       exercise_name, int(count_approaches),
+                       int(count_repetition))
                 )
+
+
+    async def delete_exercise_from_training_day(self, exercise_name) -> None:
+        """Output all exercises from database."""
+        await self.connection.execute(
+                """
+                DELETE FROM training
+                WHERE exercise = $1;
+                """, exercise_name
+                )
+
 
     async def add_training_day(self, user_id, week_number, week_day) -> None:
         """ Add training day into weeks table. """
@@ -95,7 +112,8 @@ class UserRepo():
                 )
 
 
-    async def delete_training_day(self, user_id, week_number, week_day) -> None:
+    async def delete_training_day(self, user_id, week_number, week_day
+            ) -> None:
         """ Add training day into weeks table. """
         await self.connection.execute(
                 """
@@ -104,17 +122,6 @@ class UserRepo():
                 """, *(user_id, week_number, week_day)
                 )
 
-
-    async def print_chart_week_number(self, user_id) -> tuple[str]:
-        """ Output user's training. """
-        training = await self.connection.fetch(
-                """
-                SELECT (fk_week_number, fk_week_day, exercise, count_approaches, count_repetition) from users
-                INNER JOIN training
-                ON users.user_id = training.fk_user_id
-                """
-                )
-        return training
 
     async def check_user_chart_week_number(self, user_id) -> tuple[int]:
         """ Check user's chart. """
@@ -164,7 +171,8 @@ class UserRepo():
         return description[0]
     
 
-    async def check_user_chart_week_day(self, user_id, week_number) -> tuple[int]:
+    async def check_user_chart_week_day(self, user_id, week_number
+                                        ) -> tuple[int]:
         """ Check user's chart. """
         result = await self.connection.fetch(
                 """
@@ -177,12 +185,15 @@ class UserRepo():
         return days_list
 
 
-    async def check_user_chart_exercises(self, user_id, week_number, week_day) -> tuple[int]:
+    async def check_user_chart_exercises(self, user_id, week_number, week_day
+                                         ) -> tuple[int]:
         """ Check user's chart. """
         result = await self.connection.fetch(
                 """
-                SELECT (exercise, count_approaches, count_repetition, ordering) from training
-                WHERE fk_user_id = $1 AND fk_week_number = $2 AND fk_week_day = $3
+                SELECT (exercise, count_approaches, count_repetition, ordering)
+                FROM training
+                WHERE fk_user_id = $1 AND fk_week_number = $2 
+                      AND fk_week_day = $3
                 ORDER BY ordering;
                 """, *(user_id, week_number, week_day)
                 )
