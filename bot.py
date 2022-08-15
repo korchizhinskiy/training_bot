@@ -10,6 +10,7 @@ from tgbot.routes import register_all_routers
 
 logger = logging.getLogger(__name__)
 
+
 async def connect_to_database(user, password, database, host, echo=False):
     try:
         pool = await asyncpg.create_pool(
@@ -19,10 +20,11 @@ async def connect_to_database(user, password, database, host, echo=False):
                 port="5432",
                 database=database
                 )
-        logger.info(f"Подключение к базе данных прошло успешно.")
+        logger.info("Подключение к базе данных прошло успешно.")
         return pool
     except Exception:
-        logger.info(f"Ошибка при подклчючении к DB")
+        logger.info("Ошибка при подклчючении к DB")
+
 
 async def main() -> None:
     """Defaul action for starting bot."""
@@ -34,7 +36,7 @@ async def main() -> None:
 
     if config.tg_bot.use_redis:
         storage = None
-#//     storage = RedisStorage()
+# //     storage = RedisStorage()
     else:
         storage = MemoryStorage()
 
@@ -70,4 +72,3 @@ def cli():
 
 if __name__ == "__main__":
     cli()
-
