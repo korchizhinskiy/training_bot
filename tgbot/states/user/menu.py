@@ -15,7 +15,9 @@ class UserTrainingMenu(StatesGroup):
 
     class DeleteExerciseFromTrainingDay(StatesGroup):
         """Delete exercise Group."""
-        read_name = State()
+        read_week = State()
+        read_day = State()
+        read_exercise_name = State()
 
 
     class AddTrainingDay(StatesGroup):
